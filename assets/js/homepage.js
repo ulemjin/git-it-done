@@ -10,6 +10,9 @@ var formSubmitHandler = function(event) {
 
     if (username) {
         getUserRepos(username);
+
+        // clear old content
+        repoContainerEl.textContent = "";
         nameInputEl.value = "";
     } else {
         alert("Please enter a GitHub username");
@@ -17,13 +20,33 @@ var formSubmitHandler = function(event) {
     console.log(event);
 };
 
-userFormEl.addEventListener("submit", formSubmitHandler);
+var getUserRepos = function(user) {
+    // format the github api url
+    var apiUrl = "https://api.github.com/users/" + user + "/repos";
+    
+    // make a request to the url
+    fetch(apiUrl)
+        .then(function(response) {
+            if (response.ok) {
+                response.json().then(function(data) {
+                    displayRepos(data, user);
+                });
+            } else {
+                alert("Error: " + response.statusText);
+            }
+        })
+        .catch(function(error) {
+            alert("Unable to connect to GitHub");
+        });
+};
 
 var displayRepos = function(repos, searchTerm) {
-    console.log(repos);
-    console.log(searchTerm);
-    // clear old content
-    repoContainerEl.textContent = "";
+    // check if api returned any repos
+    if (repos.length === 0) {
+        repoContainerEl.textContent = "No repositories found.";
+        return;
+    }
+
     repoSearchTerm.textContent = searchTerm;
 
     // loop over repos
@@ -62,16 +85,5 @@ var displayRepos = function(repos, searchTerm) {
     }
 };
 
-var getUserRepos = function(user) {
-    // format the github api url
-    var apiUrl = "https://api.github.com/users/" + user + "/repos";
-    
-    // make a request to the url
-    fetch(apiUrl).then(function(response) {
-        response.json().then(function(data) {
-            displayRepos(data, user);
-        });
-    });
-};
-
-getUserRepos();
+// add event listeners to forms
+userFormEl.addEventListener("submit", formSubmitHandler);
